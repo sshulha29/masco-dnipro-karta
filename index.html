@@ -145,7 +145,7 @@ const map = new maplibregl.Map({
   },
   center: [35.0462, 48.4647],
   zoom: 12.6,
-  pitch: 60,
+  pitch: 64,
   bearing: -12,
   canvasContextAttributes: { antialias: true }
 });
@@ -166,7 +166,7 @@ map.on("load", () => {
     encoding: "terrarium",
     maxzoom: 15
   });
-  map.setTerrain({ source: "terrain", exaggeration: 1.45 });
+  map.setTerrain({ source: "terrain", exaggeration: 1.7 });
   map.addLayer({
     id: "sky",
     type: "sky",
@@ -178,11 +178,20 @@ map.on("load", () => {
   });
   function addBuildings() {
   map.addLayer({
-    id: "3d-buildings", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 14,
+    id: "3d-trees", source: "ofm", "source-layer": "landcover", type: "fill-extrusion", minzoom: 13,
+    filter: ["in", ["get", "class"], ["literal", ["wood", "grass", "farmland"]]],
+    paint: {
+      "fill-extrusion-color": ["match", ["get", "class"], "wood", "#2f6b3a", "farmland", "#8a9a55", "#4d7c4a"],
+      "fill-extrusion-height": ["match", ["get", "class"], "wood", 8, 1.5],
+      "fill-extrusion-opacity": 0.55
+    }
+  });
+  map.addLayer({
+    id: "3d-buildings", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 13,
     filter: ["!=", ["get", "hide_3d"], true],
     paint: {
       "fill-extrusion-color": "#d7d0c6",
-      "fill-extrusion-height": ["*", ["coalesce", ["get", "render_height"], 10], 1.35],
+      "fill-extrusion-height": ["*", ["coalesce", ["get", "render_height"], 12], 1.6],
       "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
       "fill-extrusion-opacity": 0.96,
       "fill-extrusion-pattern": "facade",
@@ -190,11 +199,11 @@ map.on("load", () => {
     }
   });
   map.addLayer({
-    id: "3d-roofs", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 14,
+    id: "3d-roofs", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 13,
     filter: ["!=", ["get", "hide_3d"], true],
     paint: {
       "fill-extrusion-color": "#8d847c",
-      "fill-extrusion-height": ["+", ["*", ["coalesce", ["get", "render_height"], 10], 1.35], 1.2],
+      "fill-extrusion-height": ["+", ["*", ["coalesce", ["get", "render_height"], 12], 1.6], 1.2],
       "fill-extrusion-base": ["*", ["coalesce", ["get", "render_height"], 10], 1.35],
       "fill-extrusion-opacity": 0.95
     }
