@@ -57,6 +57,7 @@
 <div id="page-exit" class="page"></div>
 <div id="siren-tabs" style="position:absolute;top:46px;left:390px;right:12px;z-index:3;display:flex;gap:6px;flex-wrap:wrap"></div>
 <div id="hleg" style="position:absolute;bottom:28px;left:390px;z-index:4;background:#fff;border:1px solid #d6d3d1;border-radius:8px;padding:8px 10px;font-size:12px">Висота будинку: до 12 м світлий, 24 м середній, 50 м і вище темний. Метри з карти, не обмір.</div>
+<button id="bfly" type="button" style="position:absolute;top:92px;right:210px;z-index:4;background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:8px 12px">Проліт</button>
 <button id="b3d" type="button" style="position:absolute;top:92px;right:160px;z-index:4;background:#1f2937;color:#fff;border:0;border-radius:8px;padding:8px 12px">3D</button>
 <button id="bdelmap" type="button" style="position:absolute;top:92px;right:12px;z-index:4;background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:8px 12px">Видалити точку</button>
 <div id="map"></div>
@@ -734,7 +735,24 @@ function toggleDelete() {
 }
 document.getElementById("bdel").onclick = toggleDelete;
 document.getElementById("bdelmap").onclick = toggleDelete;
-document.getElementById("b3d").onclick = () => {
+let flyToken = 0;
+document.getElementById("bfly").onclick = () => {
+  const token = ++flyToken;
+  const path = [
+    { center: [35.046, 48.464], zoom: 12.4, pitch: 55, bearing: -20 },
+    { center: [35.02, 48.47], zoom: 14.2, pitch: 64, bearing: 20 },
+    { center: [35.06, 48.45], zoom: 15.2, pitch: 68, bearing: 80 },
+    { center: [35.09, 48.48], zoom: 13.6, pitch: 58, bearing: 140 },
+    { center: [35.046, 48.464], zoom: 12.8, pitch: 60, bearing: -15 }
+  ];
+  const step = (i) => {
+    if (token !== flyToken || i >= path.length) return;
+    map.easeTo({ ...path[i], duration: 2800, essential: true });
+    setTimeout(() => step(i + 1), 2700);
+  };
+  step(0);
+};
+document.getElementById("b3d").onclick = () => { flyToken++; 
   map.easeTo({ pitch: 68, bearing: -25, zoom: Math.max(map.getZoom(), 16), duration: 800 });
 };
 document.getElementById("bclear").onclick = () => { window.myPoints = []; saveMine(); drawMine(); writeReport(); };
