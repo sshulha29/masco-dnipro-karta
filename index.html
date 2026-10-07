@@ -56,6 +56,7 @@
 <div id="page-budget" class="page"></div>
 <div id="page-exit" class="page"></div>
 <div id="siren-tabs" style="position:absolute;top:46px;left:390px;right:12px;z-index:3;display:flex;gap:6px;flex-wrap:wrap"></div>
+<div id="hleg" style="position:absolute;bottom:28px;left:390px;z-index:4;background:#fff;border:1px solid #d6d3d1;border-radius:8px;padding:8px 10px;font-size:12px">Висота будинку: до 12 м світлий, 24 м середній, 50 м і вище темний. Метри з карти, не обмір.</div>
 <button id="b3d" type="button" style="position:absolute;top:92px;right:160px;z-index:4;background:#1f2937;color:#fff;border:0;border-radius:8px;padding:8px 12px">3D</button>
 <button id="bdelmap" type="button" style="position:absolute;top:92px;right:12px;z-index:4;background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:8px 12px">Видалити точку</button>
 <div id="map"></div>
@@ -191,10 +192,10 @@ map.on("load", () => {
     id: "3d-buildings", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 13,
     filter: ["!=", ["get", "hide_3d"], true],
     paint: {
-      "fill-extrusion-color": "#d7d0c6",
-      "fill-extrusion-height": ["*", ["coalesce", ["get", "render_height"], 12], 1.6],
+      "fill-extrusion-color": ["interpolate", ["linear"], ["coalesce", ["get", "render_height"], 9], 0, "#d6d3d1", 12, "#c4b5a0", 24, "#a8a29e", 50, "#78716c"],
+      "fill-extrusion-height": ["coalesce", ["get", "render_height"], 9],
       "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-      "fill-extrusion-opacity": 0.96,
+      "fill-extrusion-opacity": 0.92,
       "fill-extrusion-pattern": "facade",
       "fill-extrusion-vertical-gradient": true
     }
@@ -203,9 +204,9 @@ map.on("load", () => {
     id: "3d-roofs", source: "ofm", "source-layer": "building", type: "fill-extrusion", minzoom: 13,
     filter: ["!=", ["get", "hide_3d"], true],
     paint: {
-      "fill-extrusion-color": "#8d847c",
-      "fill-extrusion-height": ["+", ["*", ["coalesce", ["get", "render_height"], 12], 1.6], 1.2],
-      "fill-extrusion-base": ["*", ["coalesce", ["get", "render_height"], 10], 1.35],
+      "fill-extrusion-color": "#6b625b",
+      "fill-extrusion-height": ["+", ["coalesce", ["get", "render_height"], 9], 1],
+      "fill-extrusion-base": ["coalesce", ["get", "render_height"], 9],
       "fill-extrusion-opacity": 0.95
     }
   });
@@ -736,6 +737,12 @@ document.getElementById("b3d").onclick = () => {
   map.easeTo({ pitch: 68, bearing: -25, zoom: Math.max(map.getZoom(), 16), duration: 800 });
 };
 document.getElementById("bclear").onclick = () => { window.myPoints = []; saveMine(); drawMine(); writeReport(); };
+map.on("click", "3d-buildings", (e) => {
+  if (placing || deleting) return;
+  const h = e.features && e.features[0] && e.features[0].properties.render_height;
+  if (!h) return;
+  new maplibregl.Popup().setLngLat(e.lngLat).setHTML("Висота будинку: " + Math.round(h) + " м. Дані карти, не обмір.").addTo(map);
+});
 map.on("click", (e) => {
   if (!placing) return;
   window.myPoints.push({ lng: e.lngLat.lng, lat: e.lngLat.lat, type: document.getElementById("mytype").value, status: document.getElementById("mystatus").value });
