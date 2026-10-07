@@ -56,6 +56,7 @@
 <div id="page-budget" class="page"></div>
 <div id="page-exit" class="page"></div>
 <div id="siren-tabs" style="position:absolute;top:46px;left:390px;right:12px;z-index:3;display:flex;gap:6px;flex-wrap:wrap"></div>
+<button id="b3d" type="button" style="position:absolute;top:92px;right:160px;z-index:4;background:#1f2937;color:#fff;border:0;border-radius:8px;padding:8px 12px">3D</button>
 <button id="bdelmap" type="button" style="position:absolute;top:92px;right:12px;z-index:4;background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:8px 12px">Видалити точку</button>
 <div id="map"></div>
 <div id="panel">
@@ -145,7 +146,7 @@ const map = new maplibregl.Map({
   },
   center: [35.0462, 48.4647],
   zoom: 12.6,
-  pitch: 64,
+  pitch: 62,
   bearing: -12,
   canvasContextAttributes: { antialias: true }
 });
@@ -731,6 +732,9 @@ function toggleDelete() {
 }
 document.getElementById("bdel").onclick = toggleDelete;
 document.getElementById("bdelmap").onclick = toggleDelete;
+document.getElementById("b3d").onclick = () => {
+  map.easeTo({ pitch: 68, bearing: -25, zoom: Math.max(map.getZoom(), 16), duration: 800 });
+};
 document.getElementById("bclear").onclick = () => { window.myPoints = []; saveMine(); drawMine(); writeReport(); };
 map.on("click", (e) => {
   if (!placing) return;
