@@ -739,6 +739,24 @@ document.getElementById("bdelmap").onclick = toggleDelete;
 let flyToken = 0;
 
 document.getElementById("bproj").onclick = () => {
+  document.querySelectorAll(".proj-pin").forEach(el => el.remove());
+  DATA.features.forEach(ft => {
+    if (!ft.geometry) return;
+    const p = ft.properties;
+    const blob = ((p.type || "") + " " + (p.model || "")).toLowerCase();
+    let name = "Інше", color = "#6b7280";
+    if (blob.includes("fm04c") || blob.includes("04c")) { name = "БО-FM-04-С"; color = "#7c3aed"; }
+    else if (blob.includes("fm-05") || blob.includes("бо-fm-05")) { name = "БО-FM-05"; color = "#2563eb"; }
+    else if (blob.includes("ознс")) { name = "ОЗНС"; color = "#15803d"; }
+    else if (blob.includes("с-40") || blob.includes("с40") || blob.includes("електросирен")) { name = "С-40"; color = "#dc2626"; }
+    else if (blob.includes("бо-fm-04")) { name = "БО-FM-04"; color = "#6b7280"; }
+    const el = document.createElement("div");
+    el.className = "proj-pin";
+    el.textContent = name;
+    el.style.cssText = "background:"+color+";color:#fff;font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid #fff;white-space:nowrap";
+    new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(ft.geometry.coordinates).setPopup(new maplibregl.Popup().setHTML("<b>"+name+"</b><br>"+(p.addr||"")+"<br>"+(p.type||""))).addTo(map);
+  });
+
   window.stopOrbit && window.stopOrbit();
   const feats = [];
   const circles = [];
