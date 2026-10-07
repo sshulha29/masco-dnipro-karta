@@ -57,6 +57,7 @@
 <div id="page-exit" class="page"></div>
 <div id="siren-tabs" style="position:absolute;top:46px;left:390px;right:12px;z-index:3;display:flex;gap:6px;flex-wrap:wrap"></div>
 <div id="hleg" style="position:absolute;bottom:28px;left:390px;z-index:4;background:#fff;border:1px solid #d6d3d1;border-radius:8px;padding:8px 10px;font-size:12px">Висота будинку: до 12 м світлий, 24 м середній, 50 м і вище темний. Метри з карти, не обмір.</div>
+<button id="bproj" type="button" style="position:absolute;top:132px;right:12px;z-index:4;background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:8px 12px">Проект покриття</button>
 <button id="bfly" type="button" style="position:absolute;top:92px;right:210px;z-index:4;background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:8px 12px">Проліт</button>
 <button id="b3d" type="button" style="position:absolute;top:92px;right:160px;z-index:4;background:#1f2937;color:#fff;border:0;border-radius:8px;padding:8px 12px">3D</button>
 <button id="bdelmap" type="button" style="position:absolute;top:92px;right:12px;z-index:4;background:#7f1d1d;color:#fff;border:0;border-radius:8px;padding:8px 12px">Видалити точку</button>
@@ -736,6 +737,57 @@ function toggleDelete() {
 document.getElementById("bdel").onclick = toggleDelete;
 document.getElementById("bdelmap").onclick = toggleDelete;
 let flyToken = 0;
+
+document.getElementById("bproj").onclick = () => {
+  window.stopOrbit && window.stopOrbit();
+  const feats = [];
+  const circles = [];
+  const seen = new Set();
+  DATA.features.forEach(ft => {
+    if (!ft.geometry) return;
+    const p = ft.properties;
+    const blob = ((p.type || "") + " " + (p.model || "")).toLowerCase();
+    const indoor = blob.includes("бо-fm-04") && !blob.includes("fm04c") && !blob.includes("05");
+    const c = ft.geometry.coordinates;
+    const key = c[0].toFixed(4) + "," + c[1].toFixed(4);
+    let radius = 0, color = "#6b7280", kind = "інше";
+    if (indoor) { radius = 50; color = "#6b7280"; kind = "приміщення"; }
+    else if (blob.includes("ознс") || blob.includes("fm-05") || blob.includes("гучномов") || blob.includes("sip")) { radius = 250; color = "#15803d"; kind = "мовлення є"; }
+    else if (blob.includes("с-40") || blob.includes("с40") || blob.includes("fm04c") || blob.includes("електросирен")) { radius = 300; color = "#dc2626"; kind = "тон С-40"; }
+    if (!radius || seen.has(key + kind)) return;
+    seen.add(key + kind);
+    const f = circlePoly(c[0], c[1], radius);
+    f.properties = { color };
+    feats.push(f);
+    circles.push({ lon: c[0], lat: c[1], r: radius });
+    const need = (p.etap || "").startsWith("Включити") && ["замінити", "додати мовлення", "встановити", "встановити акустику"].includes(p.key) && !indoor;
+    if (need && !seen.has(key + "new")) {
+      seen.add(key + "new");
+      const n = circlePoly(c[0], c[1], 350);
+      n.properties = { color: "#1d4ed8" };
+      feats.push(n);
+      circles.push({ lon: c[0], lat: c[1], r: 350 });
+    }
+  });
+  window.coverFeatures = feats;
+  if (map.getSource("cover")) map.getSource("cover").setData({ type: "FeatureCollection", features: feats });
+  let total = 0, hit = 0;
+  for (let lat = 48.38; lat <= 48.56; lat += 0.004) {
+    for (let lon = 34.90; lon <= 35.20; lon += 0.005) {
+      if (!inCity(lon, lat)) continue;
+      total++;
+      for (const c of circles) {
+        const dx = (lon - c.lon) * 111320 * Math.cos(lat * Math.PI / 180);
+        const dy = (lat - c.lat) * 110540;
+        if (dx * dx + dy * dy <= c.r * c.r) { hit++; break; }
+      }
+    }
+  }
+  const pct = total ? Math.round(1000 * hit / total) / 10 : 0;
+  document.getElementById("cover-pct").textContent = "Проектна модель: " + pct + "% контуру. Червоне 300 м тон С-40, зелене 250 м мовлення, синє 350 м додати на комунальний дах. Не замір.";
+  map.flyTo({ center: [35.0462, 48.4647], zoom: 11.3, pitch: 0, bearing: 0 });
+};
+
 document.getElementById("bfly").onclick = () => {
   const token = ++flyToken;
   const path = [
